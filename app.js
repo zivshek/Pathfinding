@@ -3,11 +3,10 @@ let canvasH = 600;
 
 let sketch = function(p) {
 
-    let cols = 5;
-    let rows = 5;
-    let nodeSize = 5;
+    let cols = 15;
+    let rows = 11;
+    let nodeSize = 50;
     let totalNodes = cols * rows;
-
     
     let openSet = [];
     let closedSet = [];
@@ -20,23 +19,35 @@ let sketch = function(p) {
     p.setup = function() {
         p.createCanvas(canvasW, canvasH);
         for(let i = 0; i < totalNodes; i++) {
-            grid[i] = new Node(p.getRow(i), p.getCol(i));
+            grid[i] = new Node(p.getRow(i), p.getCol(i), nodeSize, p);
         }
 
         start = p.getNode(0, 0);
         end = p.getNode(rows - 1, cols - 1);
-        console.log(start);
+
+    };
+    
+    p.AStar = function(start, end) {
         openSet.push(start);
+        
+        while (!openSet.empty()) {
+            //let current = 
+        }
     };
     
     p.draw = function() {
+        
+        p.background(255);
+        
         if (openSet.length > 0) {
 
         } else {
 
         }
 
-        p.background(255);
+        for(let i = 0; i < totalNodes; i++) {
+            grid[i].draw();
+        }
 
     };
 

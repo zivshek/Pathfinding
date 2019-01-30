@@ -61,7 +61,11 @@ let sketch = function(p) {
 
     p.getCol = function(index) {
         return ~~(index % cols);
-    }
+    };
+
+    p.getHeuristic = function(from, to) {
+        return Math.abs(from.r - to.r) + Math.abs(from.c - to.c);
+    };
 };
 
 let myp5 = new p5(sketch, window.document.getElementById('container'));

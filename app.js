@@ -100,9 +100,10 @@ let pathfinding = function(p) {
         return ~~(index % cols);
     }
 
-    p.heuristicCost = function(start, goal) {
-        
-    }
+    p.getHeuristic = function(from, to) {
+        return Math.abs(from.r - to.r) + Math.abs(from.c - to.c);
+    };
+
 };
 
 let pathfindingp5 = new p5(pathfinding, window.document.getElementById('container'));

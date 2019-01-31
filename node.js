@@ -24,14 +24,14 @@ class Node {
         return (mx > this.x && mx < this.x + this.size && my > this.y && my < this.y + this.size);
     }
 
-    addNeighbors() {
-        if (this.c < this.p5.cols - 1)
-            this.neighbors.push(this.p5.getNode(this.c + 1, this.r));
-        if (this.c > 0)
-            this.neighbors.push(this.p5.getNode(this.c - 1, this.r));
-        if (this.r < this.p5.rows - 1)
-            this.neighbors.push(this.p5.getNode(this.c, this.r + 1));
+    addNeighbors(rows, cols) {
+        if (this.r < rows - 1)
+            this.neighbors.push(this.p5.getNode(this.r + 1, this.c));
         if (this.r > 0)
-            this.neighbors.push(this.p5.getNode(this.c, this.r - 1));
+            this.neighbors.push(this.p5.getNode(this.r - 1, this.c));
+        if (this.c < cols - 1)
+            this.neighbors.push(this.p5.getNode(this.r, this.c + 1));
+        if (this.c > 0)
+            this.neighbors.push(this.p5.getNode(this.r, this.c - 1));
     }
 }

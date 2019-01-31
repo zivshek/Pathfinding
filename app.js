@@ -16,6 +16,14 @@ let pathfinding = function(p) {
     let end;
     let found = false;
 
+    p.getGrid = function() {
+        return grid;
+    }
+
+    p.getClosedSet = function() {
+        return closedSet;
+    }
+
     p.setup = function() {
         p.createCanvas(canvasW, canvasH);
         for(let i = 0; i < totalNodes; i++) {
@@ -23,20 +31,19 @@ let pathfinding = function(p) {
         }
 
         for(let i = 0; i < totalNodes; i++) {
-            grid[i].addNeighbors();
+            grid[i].addNeighbors(rows, cols);
         }
 
         start = p.getNode(0, 0);
         end = p.getNode(rows - 1, cols - 1);
 
-        p.AStar(start, end);
+        openSet.push(start);
 
     };
     
     p.AStar = function(start, end) {
-        openSet.push(start);
         
-        while (openSet.length > 0) {
+        if (openSet.length > 0) {
             
             let lowestFIndex = 0;
 
@@ -47,8 +54,8 @@ let pathfinding = function(p) {
 
             let current = openSet[lowestFIndex];
 
-            if (openSet[lowestFIndex] === end) {
-                break;
+            if (current === end) {
+                found = true;
             }
 
             // remove from openset
@@ -59,6 +66,27 @@ let pathfinding = function(p) {
             }
 
             closedSet.push(current);
+
+            for (let i = 0; i < current.neighbors.length; i++) {
+                let neighbor = current.neighbors[i];
+
+                if (!closedSet.includes(neighbor)) {
+                    let tempG = current.g + 1;
+
+                    if (openSet.includes(neighbor)) {
+                        if (tempG < neighbor.g) {
+                            neighbor.g = tempG;
+                        }
+                    }
+                    else {
+                        neighbor.g = tempG;
+                        openSet.push(neighbor);
+                    }
+
+                    neighbor.h = p.getHeuristic(neighbor, end);
+                    neighbor.f = neighbor.g + neighbor.h;
+                }
+            }
         }
     };
     
@@ -66,11 +94,7 @@ let pathfinding = function(p) {
         
         p.background(255);
         
-        if (openSet.length > 0) {
-
-        } else {
-
-        }
+        p.AStar(start, end);
 
         for(let i = 0; i < totalNodes; i++) {
             grid[i].draw(255);

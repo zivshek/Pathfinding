@@ -1,7 +1,7 @@
 let canvasW = 800;
 let canvasH = 600;
 
-let sketch = function(p) {
+let pathfinding = function(p) {
 
     let cols = 15;
     let rows = 11;
@@ -22,16 +22,43 @@ let sketch = function(p) {
             grid[i] = new Node(p.getRow(i), p.getCol(i), nodeSize, p);
         }
 
+        for(let i = 0; i < totalNodes; i++) {
+            grid[i].addNeighbors();
+        }
+
         start = p.getNode(0, 0);
         end = p.getNode(rows - 1, cols - 1);
+
+        p.AStar(start, end);
 
     };
     
     p.AStar = function(start, end) {
         openSet.push(start);
         
-        while (!openSet.empty()) {
-            //let current = 
+        while (openSet.length > 0) {
+            
+            let lowestFIndex = 0;
+
+            for (let i = 0; i < openSet.length; i++) {
+                if (openSet[i].f < openSet[lowestFIndex].f)
+                    lowestFIndex = i;
+            }
+
+            let current = openSet[lowestFIndex];
+
+            if (openSet[lowestFIndex] === end) {
+                break;
+            }
+
+            // remove from openset
+            for (let i = openSet.length - 1; i >= 0; i--) {
+                if (openSet[i] === current) {
+                    openSet.splice(i, 1);
+                }
+            }
+
+            closedSet.push(current);
         }
     };
     
@@ -46,9 +73,19 @@ let sketch = function(p) {
         }
 
         for(let i = 0; i < totalNodes; i++) {
-            grid[i].draw();
+            grid[i].draw(255);
         }
 
+        for (let i = 0; i < openSet.length; i++) {
+            openSet[i].draw(p.color(255, 255, 0));
+        }
+
+        for (let i = 0; i < closedSet.length; i++) {
+            closedSet[i].draw(p.color(100, 100, 100));
+        }
+
+        start.draw(p.color(0, 255, 0));
+        end.draw(p.color(255, 0, 0));
     };
 
     p.getNode = function(r, c) {
@@ -62,6 +99,10 @@ let sketch = function(p) {
     p.getCol = function(index) {
         return ~~(index % cols);
     }
+
+    p.heuristicCost = function(start, goal) {
+        
+    }
 };
 
-let myp5 = new p5(sketch, window.document.getElementById('container'));
+let pathfindingp5 = new p5(pathfinding, window.document.getElementById('container'));

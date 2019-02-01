@@ -4,6 +4,7 @@ class Node {
         this.f = 0;
         this.g = Infinity;
         this.h = 0;
+        this.invalid = false;
 
         this.r = r;
         this.c = c;
@@ -15,23 +16,30 @@ class Node {
     }
 
     draw(color) {
+        this.p5.rectMode(this.p5.CORNER);
         this.p5.stroke(0);
         this.p5.fill(color);
         this.p5.rect(this.x, this.y, this.size, this.size);
     }
-    
-    mouseIn(mx, my) {
-        return (mx > this.x && mx < this.x + this.size && my > this.y && my < this.y + this.size);
+
+    invalidate() {
+        this.invalid = !this.invalid;
     }
 
     addNeighbors(rows, cols) {
-        if (this.r < rows - 1)
-            this.neighbors.push(this.p5.getNode(this.r + 1, this.c));
+        if (this.r < rows - 1) 
+            this.addNeighbor(this.r + 1, this.c);
         if (this.r > 0)
-            this.neighbors.push(this.p5.getNode(this.r - 1, this.c));
+            this.addNeighbor(this.r - 1, this.c);
         if (this.c < cols - 1)
-            this.neighbors.push(this.p5.getNode(this.r, this.c + 1));
+            this.addNeighbor(this.r, this.c + 1);
         if (this.c > 0)
-            this.neighbors.push(this.p5.getNode(this.r, this.c - 1));
+            this.addNeighbor(this.r, this.c - 1);
+    }
+
+    addNeighbor(r, c) {
+        let node = this.p5.getNode(r, c);
+        if (!node.invalid)
+            this.neighbors.push(node);
     }
 }

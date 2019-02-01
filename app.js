@@ -1,10 +1,10 @@
-let canvasW = 801;
-let canvasH = 601;
+let canvasW = 800;
+let canvasH = 600;
 
 let pathfinding = function(p) {
 
-    let gridw = 750;
-    let gridh = 650;
+    let gridw = 650;
+    let gridh = 450;
     let marginx = (canvasW - gridw) / 2;
     let marginy = (canvasH - gridh) / 2;
     
@@ -16,21 +16,16 @@ let pathfinding = function(p) {
     
     let openSet = [];
     let closedSet = [];
+    let walls = [];
     let grid = new Array(totalNodes);
     
     let start;
     let end;
     let found = false;
+    let calculate = false;
 
     let startButton;
-
-    p.getGrid = function() {
-        return grid;
-    }
-
-    p.getClosedSet = function() {
-        return closedSet;
-    }
+    let mx, my;
 
     p.setup = function() {
         p.createCanvas(canvasW, canvasH);
@@ -38,17 +33,26 @@ let pathfinding = function(p) {
             grid[i] = new Node(p.getRow(i), p.getCol(i), cellw, marginx, marginy, p);
         }
 
+        start = p.getNode(0, 0);
+        end = p.getNode(rows - 1, cols - 1); 
+
+        p.textAlign(p.CENTER);
+
+        startButton = new CustomButton(canvasW/2, canvasH - 40, 150, 35, "C a l c u l a t e", p);
+
+    };
+
+    p.reset = function() {
         for(let i = 0; i < totalNodes; i++) {
+            grid[i].neighbors = [];
             grid[i].addNeighbors(rows, cols);
         }
-
-        start = p.getNode(0, 0);
-        end = p.getNode(rows - 1, cols - 1);
+        openSet = [];
+        closedSet = [];
 
         openSet.push(start);
 
-        startButton = new CustomButton(canvasW/2, canvasH - 50, 150, 35, "Game Over", p);
-
+        calculate = true;
     };
     
     p.AStar = function(start, end) {
@@ -66,14 +70,11 @@ let pathfinding = function(p) {
 
             if (current === end) {
                 found = true;
+                calculate = false;
             }
 
             // remove from openset
-            for (let i = openSet.length - 1; i >= 0; i--) {
-                if (openSet[i] === current) {
-                    openSet.splice(i, 1);
-                }
-            }
+            p.removeElement(openSet, current);
 
             closedSet.push(current);
 
@@ -104,7 +105,10 @@ let pathfinding = function(p) {
         
         p.background(255);
         
-        p.AStar(start, end);
+        //p.AStar(start, end);
+        if (calculate)
+            p.AStar(start, end);
+
 
         for(let i = 0; i < totalNodes; i++) {
             grid[i].draw(255);
@@ -118,11 +122,52 @@ let pathfinding = function(p) {
             closedSet[i].draw(p.color(100, 100, 100));
         }
 
+        for (let i = 0; i < walls.length; i++) {
+            walls[i].draw(0);
+        }
+
         start.draw(p.color(0, 255, 0));
         end.draw(p.color(255, 0, 0));
 
         startButton.draw();
     };
+
+    p.mouseClicked = function() {
+        if (p.mouseButton === p.LEFT) {
+            mx = p.mouseX - marginx;
+            my = p.mouseY - marginy;
+
+            if (!calculate)
+                p.mouseHandler();
+        }
+    };
+
+    p.mouseHandler = function() {
+        if (mx > 0 && mx < gridw && my > 0 && my < gridh) {
+            let c = ~~(mx / cellw);
+            let r = ~~(my / cellw);
+            let node = p.getNode(r, c);
+            
+            node.invalidate();
+            // atm, clicking on one node twice won't reset it
+            if (!walls.includes(node))
+                walls.push(node);
+            else
+                p.removeElement(walls, node);
+        }
+
+        if (startButton.clicked(mx + marginx, my + marginy)) {
+            p.reset();
+        }
+    };
+
+    p.removeElement = function (array, element) {
+        for (let i = array.length - 1; i >= 0; i--) {
+            if (array[i] === element) {
+                array.splice(i, 1);
+            }
+        }
+    }
 
     p.getNode = function(r, c) {
         return grid[c + r * cols];

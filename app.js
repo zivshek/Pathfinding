@@ -1,11 +1,17 @@
-let canvasW = 800;
-let canvasH = 600;
+let canvasW = 801;
+let canvasH = 601;
 
 let pathfinding = function(p) {
 
-    let cols = 15;
-    let rows = 11;
-    let nodeSize = 50;
+    let gridw = 750;
+    let gridh = 650;
+    let marginx = (canvasW - gridw) / 2;
+    let marginy = (canvasH - gridh) / 2;
+    
+    let cellw = 50;
+    let cols = p.floor(gridw / cellw);
+    let rows = p.floor(gridh / cellw);
+
     let totalNodes = cols * rows;
     
     let openSet = [];
@@ -15,6 +21,8 @@ let pathfinding = function(p) {
     let start;
     let end;
     let found = false;
+
+    let startButton;
 
     p.getGrid = function() {
         return grid;
@@ -27,7 +35,7 @@ let pathfinding = function(p) {
     p.setup = function() {
         p.createCanvas(canvasW, canvasH);
         for(let i = 0; i < totalNodes; i++) {
-            grid[i] = new Node(p.getRow(i), p.getCol(i), nodeSize, p);
+            grid[i] = new Node(p.getRow(i), p.getCol(i), cellw, marginx, marginy, p);
         }
 
         for(let i = 0; i < totalNodes; i++) {
@@ -38,6 +46,8 @@ let pathfinding = function(p) {
         end = p.getNode(rows - 1, cols - 1);
 
         openSet.push(start);
+
+        startButton = new CustomButton(canvasW/2, canvasH - 50, 150, 35, "Game Over", p);
 
     };
     
@@ -110,6 +120,8 @@ let pathfinding = function(p) {
 
         start.draw(p.color(0, 255, 0));
         end.draw(p.color(255, 0, 0));
+
+        startButton.draw();
     };
 
     p.getNode = function(r, c) {

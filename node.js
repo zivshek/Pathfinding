@@ -1,6 +1,6 @@
 
 class Node {
-    constructor(r, c, size, p5) {
+    constructor(r, c, size, marginx, marginy, p5) {
         this.f = 0;
         this.g = Infinity;
         this.h = 0;
@@ -8,8 +8,8 @@ class Node {
         this.r = r;
         this.c = c;
         this.size = size;
-        this.x = this.c * this.size;
-        this.y = this.r * this.size;
+        this.x = this.c * this.size + marginx;
+        this.y = this.r * this.size + marginy;
         this.p5 = p5;
         this.neighbors = [];
     }

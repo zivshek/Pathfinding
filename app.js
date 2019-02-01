@@ -168,6 +168,10 @@ let pathfinding = function(p) {
 
         if (clearButton.clicked(mx + marginx, my + marginy)) {
             p.reset();
+            for(let i = 0; i < walls.length; i++) {
+                walls[i].invalidate();
+            }
+            walls = [];
         }
     };
 

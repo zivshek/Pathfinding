@@ -99,6 +99,12 @@ let pathfinding = function(p) {
                 }
             }
         }
+        else {
+            if (!found) {
+                console.log("path not found");
+                calculate = false;
+            }
+        }
     };
     
     p.draw = function() {

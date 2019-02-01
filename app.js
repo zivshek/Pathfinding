@@ -8,7 +8,7 @@ let pathfinding = function(p) {
     let marginx = (canvasW - gridw) / 2;
     let marginy = (canvasH - gridh) / 2;
     
-    let cellw = 50;
+    let cellw = 30;
     let cols = p.floor(gridw / cellw);
     let rows = p.floor(gridh / cellw);
 
@@ -24,7 +24,7 @@ let pathfinding = function(p) {
     let found = false;
     let calculate = false;
 
-    let startButton;
+    let startButton, clearButton;
     let mx, my;
 
     p.setup = function() {
@@ -33,13 +33,13 @@ let pathfinding = function(p) {
             grid[i] = new Node(p.getRow(i), p.getCol(i), cellw, marginx, marginy, p);
         }
 
-        start = p.getNode(0, 0);
-        end = p.getNode(rows - 1, cols - 1); 
+        start = p.getNode(7, 5);
+        end = p.getNode(rows - 8, cols - 6); 
 
         p.textAlign(p.CENTER);
 
         startButton = new CustomButton(canvasW/2, canvasH - 40, 150, 35, "C a l c u l a t e", p);
-
+        clearButton = new CustomButton(marginx + 50, 40, 100, 35, "C l e a r", p);
     };
 
     p.reset = function() {
@@ -51,8 +51,6 @@ let pathfinding = function(p) {
         closedSet = [];
 
         openSet.push(start);
-
-        calculate = true;
     };
     
     p.AStar = function(start, end) {
@@ -135,7 +133,8 @@ let pathfinding = function(p) {
         start.draw(p.color(0, 255, 0));
         end.draw(p.color(255, 0, 0));
 
-        startButton.draw();
+        startButton.draw('rgb(185, 229, 123)');
+        clearButton.draw('rgb(200, 30, 30)');
     };
 
     p.mouseClicked = function() {
@@ -163,6 +162,11 @@ let pathfinding = function(p) {
         }
 
         if (startButton.clicked(mx + marginx, my + marginy)) {
+            p.reset();
+            calculate = true;
+        }
+
+        if (clearButton.clicked(mx + marginx, my + marginy)) {
             p.reset();
         }
     };

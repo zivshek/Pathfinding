@@ -17,6 +17,8 @@ let pathfinding = function(p) {
     let openSet = [];
     let closedSet = [];
     let walls = [];
+    let path = [];
+
     let grid = new Array(totalNodes);
     
     let start;
@@ -49,6 +51,7 @@ let pathfinding = function(p) {
         }
         openSet = [];
         closedSet = [];
+        path = [];
 
         openSet.push(start);
     };
@@ -68,6 +71,11 @@ let pathfinding = function(p) {
 
             if (current === end) {
                 found = true;
+                while (current.cameFrom != undefined) {
+                    path.push(current);
+                    current = current.cameFrom;
+                }
+                path.push(start);
                 calculate = false;
             }
 
@@ -92,6 +100,7 @@ let pathfinding = function(p) {
                         openSet.push(neighbor);
                     }
 
+                    neighbor.cameFrom = current;
                     neighbor.h = p.getHeuristic(neighbor, end);
                     neighbor.f = neighbor.g + neighbor.h;
                 }
@@ -119,7 +128,7 @@ let pathfinding = function(p) {
         }
 
         for (let i = 0; i < openSet.length; i++) {
-            openSet[i].draw(p.color(255, 255, 0));
+            openSet[i].draw(p.color(175, 255, 175));
         }
 
         for (let i = 0; i < closedSet.length; i++) {
@@ -132,6 +141,14 @@ let pathfinding = function(p) {
 
         start.draw(p.color(0, 255, 0));
         end.draw(p.color(255, 0, 0));
+
+        if (path.length > 1){
+            for (let i = 1; i < path.length; i++){
+                p.stroke(p.color(255, 255, 0));
+                p.line(path[i].x + cellw/2, path[i].y + cellw/2,
+                       path[i - 1].x + cellw/2, path[i - 1].y + cellw/2);
+            }
+        }
 
         startButton.draw('rgb(185, 229, 123)');
         clearButton.draw('rgb(200, 30, 30)');

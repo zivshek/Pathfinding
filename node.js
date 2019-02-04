@@ -13,6 +13,7 @@ class Node {
         this.y = this.r * this.size + marginy;
         this.p5 = p5;
         this.neighbors = [];
+        this.cameFrom = undefined;
     }
 
     draw(color) {

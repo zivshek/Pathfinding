@@ -53,6 +53,8 @@ let pathfinding = function(p) {
         closedSet = [];
         path = [];
 
+        start.g = 0;
+        start.f = p.getHeuristic(start, end);
         openSet.push(start);
     };
     

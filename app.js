@@ -38,6 +38,31 @@ let pathfinding = function(p) {
         start = p.getNode(7, 5);
         end = p.getNode(rows - 8, cols - 6); 
 
+        walls.push(p.getNode(6, 7));
+        walls.push(p.getNode(7, 7));
+        walls.push(p.getNode(8, 7));
+        walls.push(p.getNode(9, 7));
+        walls.push(p.getNode(9, 6));
+        walls.push(p.getNode(9, 5));
+        walls.push(p.getNode(9, 4));
+        
+        walls.push(p.getNode(9, 14));
+        walls.push(p.getNode(8, 14));
+        walls.push(p.getNode(7, 14));
+        walls.push(p.getNode(6, 14));
+        walls.push(p.getNode(6, 15));
+        walls.push(p.getNode(6, 16));
+        walls.push(p.getNode(6, 17));
+        walls.push(p.getNode(6, 18));
+        
+        for (let i = 0; i < walls.length; i++) {
+            walls[i].invalidate();
+        }
+
+        p.reset();
+
+        calculate = true;
+
         p.textAlign(p.CENTER);
 
         startButton = new CustomButton(canvasW/2, canvasH - 40, 150, 35, "C a l c u l a t e", p);

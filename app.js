@@ -23,7 +23,7 @@ let pathfinding = function(p) {
     
     let start;
     let end;
-    let found = false;
+    let found;
     let calculate = false;
 
     let startButton, clearButton;
@@ -84,7 +84,7 @@ let pathfinding = function(p) {
     };
     
     p.AStar = function(start, end) {
-        
+        found = false;
         if (openSet.length > 0) {
             
             let lowestFIndex = 0;
@@ -110,7 +110,6 @@ let pathfinding = function(p) {
             p.removeElement(openSet, current);
 
             closedSet.push(current);
-
             for (let i = 0; i < current.neighbors.length; i++) {
                 let neighbor = current.neighbors[i];
 

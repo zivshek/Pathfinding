@@ -1,10 +1,9 @@
-let canvasW = 800;
-let canvasH = 600;
-
 let pathfinding = function (p) {
 
-    let gridw = 650;
-    let gridh = 450;
+    let canvasW = 1200;
+    let canvasH = 800;
+    let gridw = canvasW - 150;
+    let gridh = canvasH - 150;
     let marginx = (canvasW - gridw) / 2;
     let marginy = (canvasH - gridh) / 2;
 
@@ -45,27 +44,6 @@ let pathfinding = function (p) {
 
         start = p.getNode(7, 5);
         end = p.getNode(rows - 8, cols - 6);
-
-        walls.push(p.getNode(6, 7));
-        walls.push(p.getNode(7, 7));
-        walls.push(p.getNode(8, 7));
-        walls.push(p.getNode(9, 7));
-        walls.push(p.getNode(9, 6));
-        walls.push(p.getNode(9, 5));
-        walls.push(p.getNode(9, 4));
-
-        walls.push(p.getNode(9, 14));
-        walls.push(p.getNode(8, 14));
-        walls.push(p.getNode(7, 14));
-        walls.push(p.getNode(6, 14));
-        walls.push(p.getNode(6, 15));
-        walls.push(p.getNode(6, 16));
-        walls.push(p.getNode(6, 17));
-        walls.push(p.getNode(6, 18));
-
-        for (let i = 0; i < walls.length; i++) {
-            p.setWall(walls[i], true);
-        }
 
         p.reset();
 
@@ -150,17 +128,29 @@ let pathfinding = function (p) {
     };
 
     p.draw = function () {
-
+        p.clear();
         p.background(255);
 
         //p.AStar(start, end);
         if (state == states.CALCULATING)
             p.AStar(start, end);
 
-
         for (let i = 0; i < totalNodes; i++) {
             grid[i].draw(255);
         }
+
+        p.push();
+        for (let x = 0; x < cols; x++) {
+            for (let y = 0; y < rows; y++) {
+                p.stroke(0);
+                p.strokeWeight(1);
+                p.line(x * cellw + marginx, y * cellw + marginy, x * cellw + marginx, (y + 1) * cellw + marginy);
+                p.line(x * cellw + marginx, y * cellw + marginy, (x + 1) * cellw + marginx, y * cellw + marginy);
+            }
+        }
+        p.line(cols * cellw + marginx, marginy, cols * cellw + marginx, rows * cellw + marginy);
+        p.line(marginx, rows * cellw + marginy, cols * cellw + marginx, rows * cellw + marginy);
+        p.pop();
 
         for (let i = 0; i < openSet.length; i++) {
             openSet[i].draw(p.color(175, 255, 175));

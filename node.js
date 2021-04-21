@@ -4,7 +4,7 @@ class Node {
         this.f = 0;
         this.g = Infinity;
         this.h = 0;
-        this.invalid = false;
+        this.isWall = false;
 
         this.r = r;
         this.c = c;
@@ -23,12 +23,16 @@ class Node {
         this.p5.rect(this.x, this.y, this.size, this.size);
     }
 
-    invalidate() {
-        this.invalid = !this.invalid;
+    isWall() {
+        return this.isWall;
+    }
+
+    setIsWall(isWall) {
+        this.isWall = isWall;
     }
 
     addNeighbors(rows, cols) {
-        if (this.r < rows - 1) 
+        if (this.r < rows - 1)
             this.addNeighbor(this.r + 1, this.c);
         if (this.r > 0)
             this.addNeighbor(this.r - 1, this.c);
@@ -40,7 +44,7 @@ class Node {
 
     addNeighbor(r, c) {
         let node = this.p5.getNode(r, c);
-        if (!node.invalid)
+        if (!node.isWall)
             this.neighbors.push(node);
     }
 }

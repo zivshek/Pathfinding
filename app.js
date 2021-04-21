@@ -1,42 +1,50 @@
 let canvasW = 800;
 let canvasH = 600;
 
-let pathfinding = function(p) {
+let pathfinding = function (p) {
 
     let gridw = 650;
     let gridh = 450;
     let marginx = (canvasW - gridw) / 2;
     let marginy = (canvasH - gridh) / 2;
-    
+
     let cellw = 30;
     let cols = p.floor(gridw / cellw);
     let rows = p.floor(gridh / cellw);
 
     let totalNodes = cols * rows;
-    
+
     let openSet = [];
     let closedSet = [];
     let walls = [];
     let path = [];
 
     let grid = new Array(totalNodes);
-    
+
     let start;
     let end;
     let found;
-    let calculate = false;
 
     let startButton, clearButton;
     let mx, my;
 
-    p.setup = function() {
+    const states = {
+        NONE: 0,
+        PAINTING_WALL: 1,
+        ERASING_WALL: 2,
+        CALCULATING: 3
+    };
+
+    let state = states.NONE;
+
+    p.setup = function () {
         p.createCanvas(canvasW, canvasH);
-        for(let i = 0; i < totalNodes; i++) {
+        for (let i = 0; i < totalNodes; i++) {
             grid[i] = new Node(p.getRow(i), p.getCol(i), cellw, marginx, marginy, p);
         }
 
         start = p.getNode(7, 5);
-        end = p.getNode(rows - 8, cols - 6); 
+        end = p.getNode(rows - 8, cols - 6);
 
         walls.push(p.getNode(6, 7));
         walls.push(p.getNode(7, 7));
@@ -45,7 +53,7 @@ let pathfinding = function(p) {
         walls.push(p.getNode(9, 6));
         walls.push(p.getNode(9, 5));
         walls.push(p.getNode(9, 4));
-        
+
         walls.push(p.getNode(9, 14));
         walls.push(p.getNode(8, 14));
         walls.push(p.getNode(7, 14));
@@ -54,23 +62,23 @@ let pathfinding = function(p) {
         walls.push(p.getNode(6, 16));
         walls.push(p.getNode(6, 17));
         walls.push(p.getNode(6, 18));
-        
+
         for (let i = 0; i < walls.length; i++) {
-            walls[i].invalidate();
+            p.setWall(walls[i], true);
         }
 
         p.reset();
 
-        calculate = true;
+        state = states.CALCULATING;
 
         p.textAlign(p.CENTER);
 
-        startButton = new CustomButton(canvasW/2, canvasH - 40, 150, 35, "C a l c u l a t e", p);
+        startButton = new CustomButton(canvasW / 2, canvasH - 40, 150, 35, "C a l c u l a t e", p);
         clearButton = new CustomButton(marginx + 50, 40, 100, 35, "C l e a r", p);
     };
 
-    p.reset = function() {
-        for(let i = 0; i < totalNodes; i++) {
+    p.reset = function () {
+        for (let i = 0; i < totalNodes; i++) {
             grid[i].neighbors = [];
             grid[i].addNeighbors(rows, cols);
         }
@@ -81,12 +89,13 @@ let pathfinding = function(p) {
         start.g = 0;
         start.f = p.getHeuristic(start, end);
         openSet.push(start);
+        state = states.NONE;
     };
-    
-    p.AStar = function(start, end) {
+
+    p.AStar = function (start, end) {
         found = false;
         if (openSet.length > 0) {
-            
+
             let lowestFIndex = 0;
 
             for (let i = 0; i < openSet.length; i++) {
@@ -103,7 +112,7 @@ let pathfinding = function(p) {
                     current = current.cameFrom;
                 }
                 path.push(start);
-                calculate = false;
+                state = states.NONE;
             }
 
             // remove from openset
@@ -135,21 +144,21 @@ let pathfinding = function(p) {
         else {
             if (!found) {
                 console.log("path not found");
-                calculate = false;
+                state = states.NONE;
             }
         }
     };
-    
-    p.draw = function() {
-        
+
+    p.draw = function () {
+
         p.background(255);
-        
+
         //p.AStar(start, end);
-        if (calculate)
+        if (state == states.CALCULATING)
             p.AStar(start, end);
 
 
-        for(let i = 0; i < totalNodes; i++) {
+        for (let i = 0; i < totalNodes; i++) {
             grid[i].draw(255);
         }
 
@@ -168,11 +177,11 @@ let pathfinding = function(p) {
         start.draw(p.color(0, 255, 0));
         end.draw(p.color(255, 0, 0));
 
-        if (path.length > 1){
-            for (let i = 1; i < path.length; i++){
+        if (path.length > 1) {
+            for (let i = 1; i < path.length; i++) {
                 p.stroke(p.color(255, 255, 0));
-                p.line(path[i].x + cellw/2, path[i].y + cellw/2,
-                       path[i - 1].x + cellw/2, path[i - 1].y + cellw/2);
+                p.line(path[i].x + cellw / 2, path[i].y + cellw / 2,
+                    path[i - 1].x + cellw / 2, path[i - 1].y + cellw / 2);
             }
         }
 
@@ -180,39 +189,88 @@ let pathfinding = function(p) {
         clearButton.draw('rgb(200, 30, 30)');
     };
 
-    p.mouseClicked = function() {
-        if (p.mouseButton === p.LEFT) {
-            mx = p.mouseX - marginx;
-            my = p.mouseY - marginy;
+    p.isCalculating = function () {
+        return state === states.CALCULATING;
+    };
 
-            if (!calculate)
-                p.mouseHandler();
+    p.isValidNode = function (node) {
+        return node != null && node != start && node != end;
+    };
+
+    p.setWall = function (node, isWall) {
+        node.setIsWall(isWall);
+        if (isWall && !walls.includes(node))
+            walls.push(node);
+        if (!isWall)
+            p.removeElement(walls, node);
+    };
+
+    p.getMousePos = function () {
+        mx = p.mouseX - marginx;
+        my = p.mouseY - marginy;
+        return { x: mx, y: my };
+    };
+
+    p.mousePressed = function () {
+        console.log(p.isCalculating())
+        if (p.mouseButton != p.LEFT || p.isCalculating())
+            return;
+
+        const { x, y } = p.getMousePos();
+
+        let n = p.getNodeMouseIsOn(x, y);
+        if (p.isValidNode(n)) {
+            if (walls.includes(n))
+                state = states.ERASING_WALL;
+            else
+                state = states.PAINTING_WALL;
         }
     };
 
-    p.mouseHandler = function() {
+    p.mouseReleased = function () {
+        p.handleNodeClick();
+        p.mouseHandler();
+    };
+
+    p.mouseDragged = function () {
+        p.handleNodeClick();
+    }
+
+    p.handleNodeClick = function () {
+        if (p.mouseButton != p.LEFT || p.isCalculating())
+            return;
+
+        const { x, y } = p.getMousePos();
+        let n = p.getNodeMouseIsOn(x, y);
+        if (!p.isValidNode(n))
+            return;
+
+        if (state === states.PAINTING_WALL) {
+            p.setWall(n, true);
+        } else if (state === states.ERASING_WALL) {
+            p.setWall(n, false);
+        }
+    };
+
+    p.getNodeMouseIsOn = function (x, y) {
         if (mx > 0 && mx < gridw && my > 0 && my < gridh) {
             let c = ~~(mx / cellw);
             let r = ~~(my / cellw);
-            let node = p.getNode(r, c);
-            
-            node.invalidate();
-            // atm, clicking on one node twice won't reset it
-            if (!walls.includes(node))
-                walls.push(node);
-            else
-                p.removeElement(walls, node);
+            return p.getNode(r, c);
         }
+        return null;
+    };
 
+    p.mouseHandler = function () {
         if (startButton.clicked(mx + marginx, my + marginy)) {
             p.reset();
-            calculate = true;
+            state = states.CALCULATING;
         }
 
         if (clearButton.clicked(mx + marginx, my + marginy)) {
             p.reset();
-            for(let i = 0; i < walls.length; i++) {
-                walls[i].invalidate();
+            for (let i = 0; i < walls.length; i++) {
+                walls[i].setIsWall(false);
             }
             walls = [];
         }
@@ -226,19 +284,19 @@ let pathfinding = function(p) {
         }
     }
 
-    p.getNode = function(r, c) {
+    p.getNode = function (r, c) {
         return grid[c + r * cols];
     };
 
-    p.getRow = function(index) {
+    p.getRow = function (index) {
         return ~~(index / cols);
     };
 
-    p.getCol = function(index) {
+    p.getCol = function (index) {
         return ~~(index % cols);
     }
 
-    p.getHeuristic = function(from, to) {
+    p.getHeuristic = function (from, to) {
         return Math.abs(from.r - to.r) + Math.abs(from.c - to.c);
     };
 

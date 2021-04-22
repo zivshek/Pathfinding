@@ -2,6 +2,8 @@ let pathfinding = function (p) {
 
     let canvasW = 1200;
     let canvasH = 800;
+    // let canvasW = 800;
+    // let canvasH = 650;
     let gridw = canvasW - 150;
     let gridh = canvasH - 150;
     let marginx = (canvasW - gridw) / 2;
@@ -27,11 +29,20 @@ let pathfinding = function (p) {
     let startButton, clearButton;
     let mx, my;
 
+    let cmds = [];
+    let MAX_CMDS = 10;
+    let keys = {
+        ctrl: false,
+        z: false
+    };
+
     const states = {
         NONE: 0,
-        PAINTING_WALL: 1,
-        ERASING_WALL: 2,
-        CALCULATING: 3
+        PAINTING_WALL_SINGLE: 1,
+        PAINTING_WALL_MULTIPLE: 2,
+        ERASING_WALL_SINGLE: 3,
+        ERASING_WALL_MULTIPLE: 4,
+        CALCULATING: 5
     };
 
     let state = states.NONE;
@@ -48,8 +59,6 @@ let pathfinding = function (p) {
         p.reset();
 
         state = states.CALCULATING;
-
-        p.textAlign(p.CENTER);
 
         startButton = new CustomButton(canvasW / 2, canvasH - 40, 150, 35, "C a l c u l a t e", p);
         clearButton = new CustomButton(marginx + 50, 40, 100, 35, "C l e a r", p);
@@ -68,6 +77,33 @@ let pathfinding = function (p) {
         start.f = p.getHeuristic(start, end);
         openSet.push(start);
         state = states.NONE;
+    };
+
+    p.keyPressed = function () {
+        if (p.isCalculating())
+            return;
+
+        if (p.keyCode === 17)
+            keys.ctrl = true;
+        if (p.keyCode === 90)
+            keys.z = true;
+
+        if (keys.ctrl && keys.z) {
+            if (cmds.length > 0) {
+                let cmd = p.getLastCmd();
+                cmd.undo();
+                p.removeElement(cmds, cmd);
+            }
+        }
+    };
+
+    p.keyReleased = function () {
+        if (p.isCalculating())
+            return;
+        if (p.keyCode === 17)
+            keys.ctrl = false;
+        if (p.keyCode === 90)
+            keys.z = false;
     };
 
     p.AStar = function (start, end) {
@@ -135,10 +171,6 @@ let pathfinding = function (p) {
         if (state == states.CALCULATING)
             p.AStar(start, end);
 
-        for (let i = 0; i < totalNodes; i++) {
-            grid[i].draw(255);
-        }
-
         p.push();
         for (let x = 0; x < cols; x++) {
             for (let y = 0; y < rows; y++) {
@@ -176,7 +208,7 @@ let pathfinding = function (p) {
         }
 
         startButton.draw('rgb(185, 229, 123)');
-        clearButton.draw('rgb(200, 30, 30)');
+        clearButton.draw(p.color(200, 30, 30, 150));
     };
 
     p.isCalculating = function () {
@@ -202,7 +234,6 @@ let pathfinding = function (p) {
     };
 
     p.mousePressed = function () {
-        console.log(p.isCalculating())
         if (p.mouseButton != p.LEFT || p.isCalculating())
             return;
 
@@ -210,10 +241,10 @@ let pathfinding = function (p) {
 
         let n = p.getNodeMouseIsOn(x, y);
         if (p.isValidNode(n)) {
-            if (walls.includes(n))
-                state = states.ERASING_WALL;
+            if (n.getIsWall())
+                state = states.ERASING_WALL_SINGLE;
             else
-                state = states.PAINTING_WALL;
+                state = states.PAINTING_WALL_SINGLE;
         }
     };
 
@@ -223,8 +254,45 @@ let pathfinding = function (p) {
     };
 
     p.mouseDragged = function () {
-        p.handleNodeClick();
-    }
+        if (p.mouseButton != p.LEFT || p.isCalculating())
+            return;
+
+        const { x, y } = p.getMousePos();
+        let n = p.getNodeMouseIsOn(x, y);
+        if (!p.isValidNode(n))
+            return;
+
+        switch (state) {
+            case states.PAINTING_WALL_SINGLE:
+                state = states.PAINTING_WALL_MULTIPLE;
+                cmds.push(new Cmd(state, [n], p));
+                p.setWall(n, true);
+                break;
+            case states.ERASING_WALL_SINGLE:
+                state = states.ERASING_WALL_MULTIPLE;
+                cmds.push(new Cmd(state, [n], p));
+                p.setWall(n, false);
+                break;
+            case states.PAINTING_WALL_MULTIPLE:
+                if (!n.getIsWall()) {
+                    let cmd = p.getLastCmd();
+                    cmd.addNode(n);
+                    p.setWall(n, true);
+                }
+                break;
+            case states.ERASING_WALL_MULTIPLE:
+                if (n.getIsWall()) {
+                    let cmd = p.getLastCmd();
+                    cmd.addNode(n);
+                    p.setWall(n, false);
+                }
+                break;
+        }
+    };
+
+    p.getLastCmd = function () {
+        return cmds[cmds.length - 1];
+    };
 
     p.handleNodeClick = function () {
         if (p.mouseButton != p.LEFT || p.isCalculating())
@@ -235,9 +303,11 @@ let pathfinding = function (p) {
         if (!p.isValidNode(n))
             return;
 
-        if (state === states.PAINTING_WALL) {
+        if (state === states.PAINTING_WALL_SINGLE) {
+            cmds.push(new Cmd(state, [n], p));
             p.setWall(n, true);
-        } else if (state === states.ERASING_WALL) {
+        } else if (state === states.ERASING_WALL_SINGLE) {
+            cmds.push(new Cmd(state, [n], p));
             p.setWall(n, false);
         }
     };

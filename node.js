@@ -15,6 +15,12 @@ class Node {
         this.cameFrom = undefined;
     }
 
+    reset() {
+        this.f = 0;
+        this.g = Infinity;
+        this.h = 0;
+    }
+
     draw(color) {
         this.p5.push();
         this.p5.rectMode(this.p5.CORNER);

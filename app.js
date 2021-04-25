@@ -1,26 +1,12 @@
 let pathfinding = function (p) {
 
-    let canvasW = 1200;
-    let canvasH = 800;
-    // let canvasW = 800;
-    // let canvasH = 650;
-    let gridw = canvasW - 150;
-    let gridh = canvasH - 150;
-    let marginx = (canvasW - gridw) / 2;
-    let marginy = (canvasH - gridh) / 2;
-
-    let cellw = 30;
-    let cols = p.floor(gridw / cellw);
-    let rows = p.floor(gridh / cellw);
-
-    let totalNodes = cols * rows;
+    let debug = true;
+    let canvasW, canvasH, gridw, gridh, marginx, marginy, cellw, cols, rows, totalNodes, grid;
 
     let openSet = [];
     let closedSet = [];
     let walls = [];
     let path = [];
-
-    let grid = new Array(totalNodes);
 
     let start;
     let end;
@@ -47,7 +33,26 @@ let pathfinding = function (p) {
 
     let state = states.NONE;
 
+    p.init = function () {
+        canvasW = 1200;
+        canvasH = 800;
+        if (debug) {
+            canvasW = 800;
+            canvasH = 650;
+        }
+        gridw = canvasW - 150;
+        gridh = canvasH - 150;
+        marginx = (canvasW - gridw) / 2;
+        marginy = (canvasH - gridh) / 2;
+        cellw = 30;
+        cols = p.floor(gridw / cellw);
+        rows = p.floor(gridh / cellw);
+        totalNodes = cols * rows;
+        grid = new Array(totalNodes);
+    };
+
     p.setup = function () {
+        p.init();
         p.createCanvas(canvasW, canvasH);
         p.frameRate(10);
         for (let i = 0; i < totalNodes; i++) {
@@ -66,12 +71,17 @@ let pathfinding = function (p) {
     };
 
     p.reset = function () {
+        grid.forEach(node => {
+            node.reset();
+        });
+
         openSet = [];
         closedSet = [];
         path = [];
 
         start.g = 0;
-        start.f = start.g + p.getHeuristic(start, end);
+        start.h = p.getHeuristic(start, end);
+        start.f = start.g + start.h;
         openSet.push(start);
         state = states.NONE;
     };
@@ -193,9 +203,17 @@ let pathfinding = function (p) {
                 p.strokeWeight(1);
                 p.line(x * cellw + marginx, y * cellw + marginy, x * cellw + marginx, (y + 1) * cellw + marginy);
                 p.line(x * cellw + marginx, y * cellw + marginy, (x + 1) * cellw + marginx, y * cellw + marginy);
-                p.textAlign(p.CENTER);
-                let n = p.getNode(y, x);
-                p.text(n.id, n.x + cellw / 2, n.y + cellw / 2);
+                if (debug) {
+                    p.textAlign(p.CENTER);
+                    let n = p.getNode(y, x);
+                    p.strokeWeight(0.5);
+                    p.textSize(8);
+                    let fText = n.f === Infinity ? '~' : n.f.toFixed(1);
+                    p.text('f: ' + fText, n.x + cellw / 2, n.y + cellw / 3);
+                    let gText = n.g === Infinity ? '~' : n.g.toFixed(1);
+                    p.text('g:' + gText, n.x + cellw / 2, n.y + 2 * cellw / 3);
+                    p.text('h:' + n.h.toFixed(1), n.x + cellw / 2, n.y + cellw);
+                }
             }
         }
         p.line(cols * cellw + marginx, marginy, cols * cellw + marginx, rows * cellw + marginy);
@@ -362,9 +380,10 @@ let pathfinding = function (p) {
     }
 
     p.getHeuristic = function (from, to) {
-        let dr = Math.abs(from.r - to.r);
-        let dc = Math.abs(from.c - to.c);
-        return 1 * (dr + dc) + (1.414 - 2 * 1) * Math.min(dr, dc);
+        // let dr = Math.abs(from.r - to.r);
+        // let dc = Math.abs(from.c - to.c);
+        // return 1 * (dr + dc) + (1.414 - 2 * 1) * Math.min(dr, dc);
+        return Math.abs(from.r - to.r) + Math.abs(from.c - to.c);
     };
 
 };

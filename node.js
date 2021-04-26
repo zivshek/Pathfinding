@@ -40,40 +40,6 @@ class Node {
         this.isWall = isWall;
     }
 
-    getNeighbors() {
-        let neighbors = [];
-        let addNeighbor = function (node) {
-            if (node != null && !node.isWall) {
-                neighbors.push(node);
-            }
-        }
-
-        let west = this.p5.getNode(this.r, this.c - 1);
-        let north = this.p5.getNode(this.r - 1, this.c);
-        let east = this.p5.getNode(this.r, this.c + 1);
-        let south = this.p5.getNode(this.r + 1, this.c);
-
-        addNeighbor(west);
-        addNeighbor(north);
-        addNeighbor(east);
-        addNeighbor(south);
-
-        let canAddDiagonal = function (n1, n2) {
-            return (n1 != null && !n1.isWall) || (n2 != null && !n2.isWall);
-        }
-
-        if (canAddDiagonal(west, north))
-            addNeighbor(this.p5.getNode(this.r - 1, this.c - 1));
-        if (canAddDiagonal(north, east))
-            addNeighbor(this.p5.getNode(this.r - 1, this.c + 1));
-        if (canAddDiagonal(east, south))
-            addNeighbor(this.p5.getNode(this.r + 1, this.c + 1));
-        if (canAddDiagonal(south, west))
-            addNeighbor(this.p5.getNode(this.r + 1, this.c - 1));
-
-        return neighbors;
-    }
-
     isDiagonal(other) {
         return (this.r - 1 == other.r && this.c - 1 == other.c)
             || (this.r - 1 == other.r && this.c + 1 == other.c)

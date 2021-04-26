@@ -113,6 +113,22 @@ let pathfinding = function (p) {
             keys.z = false;
     };
 
+    p.getNeighbors = function (n) {
+        let neighbors = [];
+        neighbors.push(p.getNode(n.r - 1, n.c - 1));
+        neighbors.push(p.getNode(n.r - 1, n.c));
+        neighbors.push(p.getNode(n.r - 1, n.c + 1));
+        neighbors.push(p.getNode(n.r, n.c + 1));
+        neighbors.push(p.getNode(n.r + 1, n.c + 1));
+        neighbors.push(p.getNode(n.r + 1, n.c));
+        neighbors.push(p.getNode(n.r + 1, n.c - 1));
+        neighbors.push(p.getNode(n.r, n.c - 1));
+
+        neighbors = neighbors.filter(node => node != null && !node.isWall);
+
+        return neighbors;
+    };
+
     p.AStar = function (start, end) {
         found = false;
         if (openSet.length > 0) {
@@ -139,19 +155,16 @@ let pathfinding = function (p) {
 
             p.removeElement(openSet, current);
             closedSet.push(current);
-            let neighbors = current.getNeighbors();
+            let neighbors = p.getNeighbors(current);
             for (let i = 0; i < neighbors.length; i++) {
                 let neighbor = neighbors[i];
-                let g = current.g;
-                if (current.isDiagonal(neighbor)) {
-                    g += 1.414;
-                } else {
-                    g += 1;
-                }
-
                 if (!closedSet.includes(neighbor)) {
-                    neighbor.h = p.getHeuristic(neighbor, end);
-                    neighbor.f = neighbor.g + neighbor.h;
+                    let g = current.g;
+                    if (current.isDiagonal(neighbor)) {
+                        g += 1.414;
+                    } else {
+                        g += 1;
+                    }
                     if (openSet.includes(neighbor)) {
                         if (g < neighbor.g) {
                             neighbor.g = g;
@@ -161,6 +174,8 @@ let pathfinding = function (p) {
                         neighbor.g = g;
                         openSet.push(neighbor);
                     }
+                    neighbor.h = p.getHeuristic(neighbor, end);
+                    neighbor.f = neighbor.g + neighbor.h;
                     neighbor.cameFrom = current;
                 }
             }

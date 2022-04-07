@@ -1,6 +1,6 @@
 let pathfinding = function (p) {
 
-    let debug = true;
+    let debug = false;
     let canvasW, canvasH, gridw, gridh, marginx, marginy, cellw, cols, rows, totalNodes, grid;
 
     let openSet = [];
@@ -20,6 +20,7 @@ let pathfinding = function (p) {
         ctrl: false,
         z: false
     };
+    let speed = 20;
 
     const states = {
         NONE: 0,
@@ -28,6 +29,19 @@ let pathfinding = function (p) {
         ERASING_WALL_SINGLE: 3,
         ERASING_WALL_MULTIPLE: 4,
         CALCULATING: 5
+    };
+
+    const NeighborType = {
+        TopLeft: 0,
+        Top: 1,
+        TopRight: 2,
+        Right: 3,
+        BottomRight: 4,
+        Bottom: 5,
+        BottomLeft: 6,
+        Left: 7,
+
+        Total: 8
     };
 
     let state = states.NONE;
@@ -53,26 +67,29 @@ let pathfinding = function (p) {
     p.setup = function () {
         p.init();
         p.createCanvas(canvasW, canvasH);
-        p.frameRate(10);
+        p.frameRate(speed);
         for (let i = 0; i < totalNodes; i++) {
             grid[i] = new Node(i, p.getRow(i), p.getCol(i), cellw, marginx, marginy, p);
         }
 
-        start = p.getNode(7, 5);
-        end = p.getNode(rows - 8, cols - 6);
+        if (debug) {
+            start = p.getNode(1, 1);
+            end = p.getNode(rows - 1, cols - 1);
+        } else {
+            start = p.getNode(7, 5);
+            end = p.getNode(rows - 8, cols - 6);
+        }
 
         p.reset();
 
         state = states.CALCULATING;
 
-        startButton = new CustomButton(canvasW / 2, canvasH - 40, 150, 35, "C a l c u l a t e", p);
+        startButton = new CustomButton(canvasW / 2, canvasH - 40, 100, 35, "S t a r t", p);
         clearButton = new CustomButton(marginx + 50, 40, 100, 35, "C l e a r", p);
     };
 
     p.reset = function () {
-        grid.forEach(node => {
-            node.reset();
-        });
+        grid.forEach(node => node.reset());
 
         openSet = [];
         closedSet = [];
@@ -114,18 +131,35 @@ let pathfinding = function (p) {
 
     p.getNeighbors = function (n) {
         let neighbors = [];
-        neighbors.push(p.getNode(n.r - 1, n.c - 1));
-        neighbors.push(p.getNode(n.r - 1, n.c));
-        neighbors.push(p.getNode(n.r - 1, n.c + 1));
-        neighbors.push(p.getNode(n.r, n.c + 1));
-        neighbors.push(p.getNode(n.r + 1, n.c + 1));
-        neighbors.push(p.getNode(n.r + 1, n.c));
-        neighbors.push(p.getNode(n.r + 1, n.c - 1));
-        neighbors.push(p.getNode(n.r, n.c - 1));
-
-        neighbors = neighbors.filter(node => node != null && !node.isWall);
+        // Must from top left and be clockwise, according to Neighbor order
+        for (let i = 0; i < NeighborType.Total; i++) {
+            let neighbor = p.getNodeByNeighborType(n, i);
+            if (!p.isBlocked(n, neighbor, i))
+                neighbors.push(neighbor);
+        }
 
         return neighbors;
+    };
+
+    p.isBlocked = function (n, neighbor, neighborType) {
+        let blocked = p.isWallOrNull(neighbor);
+
+        switch (neighborType) {
+            case NeighborType.TopLeft:
+                return blocked || (p.isWallOrNull(p.getNode(n.r, n.c - 1)) && p.isWallOrNull(p.getNode(n.r - 1, n.c)));
+            case NeighborType.TopRight:
+                return blocked || (p.isWallOrNull(p.getNode(n.r, n.c + 1)) && p.isWallOrNull(p.getNode(n.r - 1, n.c)));
+            case NeighborType.BottomRight:
+                return blocked || (p.isWallOrNull(p.getNode(n.r, n.c + 1)) && p.isWallOrNull(p.getNode(n.r + 1, n.c)));
+            case NeighborType.BottomRight:
+                return blocked || (p.isWallOrNull(p.getNode(n.r, n.c - 1)) && p.isWallOrNull(p.getNode(n.r + 1, n.c)));
+            default:
+                return blocked;
+        }
+    };
+
+    p.isWallOrNull = function (n) {
+        return n == null || n.isWall;
     };
 
     p.AStar = function (start, end) {
@@ -172,10 +206,10 @@ let pathfinding = function (p) {
                     else {
                         neighbor.g = g;
                         openSet.push(neighbor);
+                        neighbor.cameFrom = current;
                     }
                     neighbor.h = p.getHeuristic(neighbor, end);
                     neighbor.f = neighbor.g + neighbor.h;
-                    neighbor.cameFrom = current;
                 }
             }
         }
@@ -222,11 +256,18 @@ let pathfinding = function (p) {
                     let n = p.getNode(y, x);
                     p.strokeWeight(0.5);
                     p.textSize(8);
+                    let xPos = n.x + cellw / 2;
+                    let getYPos = (line) => {
+                        return n.y + line * cellw / 5;
+                    };
+                    let line = 1;
+                    p.text('index: ' + n.id, xPos, getYPos(line++));
+                    p.text('from: ' + n.cameFrom?.id, xPos, getYPos(line++));
                     let fText = n.f === Infinity ? '~' : n.f.toFixed(1);
-                    p.text('f: ' + fText, n.x + cellw / 2, n.y + cellw / 3);
+                    p.text('f: ' + fText, xPos, getYPos(line++));
                     let gText = n.g === Infinity ? '~' : n.g.toFixed(1);
-                    p.text('g:' + gText, n.x + cellw / 2, n.y + 2 * cellw / 3);
-                    p.text('h:' + n.h.toFixed(1), n.x + cellw / 2, n.y + cellw);
+                    p.text('g:' + gText, xPos, getYPos(line++));
+                    p.text('h:' + n.h.toFixed(1), xPos, getYPos(line++));
                 }
             }
         }
@@ -274,10 +315,7 @@ let pathfinding = function (p) {
 
         let n = p.getNodeMouseIsOn(x, y);
         if (p.isValidNode(n)) {
-            if (n.getIsWall())
-                state = states.ERASING_WALL_SINGLE;
-            else
-                state = states.PAINTING_WALL_SINGLE;
+            state = n.getIsWall() ? states.ERASING_WALL_SINGLE : states.PAINTING_WALL_SINGLE;
         }
     };
 
@@ -381,6 +419,31 @@ let pathfinding = function (p) {
         if (r < 0 || c < 0 || r > rows - 1 || c > cols - 1)
             return null;
         return grid[c + r * cols];
+    };
+
+    p.getNodeByNeighborType = function (n, neighborType) {
+        if (n == null)
+            return null;
+
+        switch (neighborType)
+        {
+            case NeighborType.TopLeft:
+                return p.getNode(n.r - 1, n.c - 1);
+            case NeighborType.Top:
+                return p.getNode(n.r - 1, n.c);
+            case NeighborType.TopRight:
+                return p.getNode(n.r - 1, n.c + 1);
+            case NeighborType.Right:
+                return p.getNode(n.r, n.c + 1);
+            case NeighborType.BottomRight:
+                return p.getNode(n.r + 1, n.c + 1);
+            case NeighborType.Bottom:
+                return p.getNode(n.r + 1, n.c);
+            case NeighborType.BottomLeft:
+                return p.getNode(n.r + 1, n.c - 1);
+            case NeighborType.Left:
+                return p.getNode(n.r, n.c - 1);
+        }
     };
 
     p.getRow = function (index) {

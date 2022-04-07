@@ -13,7 +13,6 @@ let pathfinding = function (p) {
     let found;
 
     let startButton, clearButton;
-    let mx, my;
 
     let cmds = [];
     let MAX_CMDS = 10;
@@ -264,9 +263,7 @@ let pathfinding = function (p) {
     };
 
     p.getMousePos = function () {
-        mx = p.mouseX - marginx;
-        my = p.mouseY - marginy;
-        return { x: mx, y: my };
+        return { x: p.mouseX - marginx, y: p.mouseY - marginy };
     };
 
     p.mousePressed = function () {
@@ -349,21 +346,21 @@ let pathfinding = function (p) {
     };
 
     p.getNodeMouseIsOn = function (x, y) {
-        if (mx > 0 && mx < gridw && my > 0 && my < gridh) {
-            let c = ~~(mx / cellw);
-            let r = ~~(my / cellw);
+        if (x > 0 && x < gridw && y > 0 && y < gridh) {
+            let c = ~~(x / cellw);
+            let r = ~~(y / cellw);
             return p.getNode(r, c);
         }
         return null;
     };
 
     p.mouseHandler = function () {
-        if (startButton.clicked(mx + marginx, my + marginy)) {
+        if (startButton.clicked(p.mouseX, p.mouseY)) {
             p.reset();
             state = states.CALCULATING;
         }
 
-        if (clearButton.clicked(mx + marginx, my + marginy)) {
+        if (clearButton.clicked(p.mouseX, p.mouseY)) {
             p.reset();
             for (let i = 0; i < walls.length; i++) {
                 walls[i].setIsWall(false);

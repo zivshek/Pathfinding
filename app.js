@@ -1,6 +1,5 @@
 let pathfinding = function (p) {
 
-    let debug = false;
     let canvasW, canvasH, gridw, gridh, marginx, marginy, cellw, cols, rows, totalNodes, grid;
 
     let openSet = [];
@@ -12,7 +11,7 @@ let pathfinding = function (p) {
     let end;
     let found;
 
-    let startButton, clearButton;
+    let startButton, clearButton, diagonalCheckbox, debugCheckbox;
 
     let cmds = [];
     let MAX_CMDS = 10;
@@ -22,7 +21,7 @@ let pathfinding = function (p) {
     };
     let speed = 20;
 
-    const states = {
+    const State = {
         NONE: 0,
         PAINTING_WALL_SINGLE: 1,
         PAINTING_WALL_MULTIPLE: 2,
@@ -44,35 +43,45 @@ let pathfinding = function (p) {
         Total: 8
     };
 
-    let state = states.NONE;
+    let state = State.NONE;
 
+    // only called once
     p.init = function () {
         canvasW = 1200;
         canvasH = 800;
-        if (debug) {
-            canvasW = 800;
-            canvasH = 650;
-        }
         gridw = canvasW - 150;
         gridh = canvasH - 150;
         marginx = (canvasW - gridw) / 2;
         marginy = (canvasH - gridh) / 2;
-        cellw = 30;
-        cols = p.floor(gridw / cellw);
-        rows = p.floor(gridh / cellw);
-        totalNodes = cols * rows;
-        grid = new Array(totalNodes);
+        p.createCanvas(canvasW, canvasH);
+
+        startButton = new CustomButton(canvasW / 2, canvasH - 40, 100, 35, "S t a r t", p);
+        clearButton = new CustomButton(marginx + 50, 40, 100, 35, "C l e a r", p);
+        diagonalCheckbox = p.createCheckbox('allow diagonal', true);
+        debugCheckbox = p.createCheckbox('debug', false);
+        debugCheckbox.changed(p.onDebugCheckboxChanged);
     };
 
     p.setup = function () {
         p.init();
-        p.createCanvas(canvasW, canvasH);
+        p.reset();
+
+        state = State.CALCULATING;
+    };
+
+    p.reset = function () {
         p.frameRate(speed);
+        cellw = p.debug() ? 90 : 30;
+        cols = p.floor(gridw / cellw);
+        rows = p.floor(gridh / cellw);
+        totalNodes = cols * rows;
+        grid = new Array(totalNodes);
+
         for (let i = 0; i < totalNodes; i++) {
             grid[i] = new Node(i, p.getRow(i), p.getCol(i), cellw, marginx, marginy, p);
         }
 
-        if (debug) {
+        if (p.debug()) {
             start = p.getNode(1, 1);
             end = p.getNode(rows - 1, cols - 1);
         } else {
@@ -80,15 +89,6 @@ let pathfinding = function (p) {
             end = p.getNode(rows - 8, cols - 6);
         }
 
-        p.reset();
-
-        state = states.CALCULATING;
-
-        startButton = new CustomButton(canvasW / 2, canvasH - 40, 100, 35, "S t a r t", p);
-        clearButton = new CustomButton(marginx + 50, 40, 100, 35, "C l e a r", p);
-    };
-
-    p.reset = function () {
         grid.forEach(node => node.reset());
 
         openSet = [];
@@ -99,7 +99,11 @@ let pathfinding = function (p) {
         start.h = p.getHeuristic(start, end);
         start.f = start.g + start.h;
         openSet.push(start);
-        state = states.NONE;
+        state = State.NONE;
+    };
+
+    p.onDebugCheckboxChanged = function () {
+        p.reset();
     };
 
     p.keyPressed = function () {
@@ -144,6 +148,9 @@ let pathfinding = function (p) {
     p.isBlocked = function (n, neighbor, neighborType) {
         let blocked = p.isWallOrNull(neighbor);
 
+        if (!p.allowDiagonal())
+            return blocked;
+
         switch (neighborType) {
             case NeighborType.TopLeft:
                 return blocked || (p.isWallOrNull(p.getNode(n.r, n.c - 1)) && p.isWallOrNull(p.getNode(n.r - 1, n.c)));
@@ -182,7 +189,7 @@ let pathfinding = function (p) {
                     current = current.cameFrom;
                 }
                 path.push(start);
-                state = states.NONE;
+                state = State.NONE;
                 return;
             }
 
@@ -216,7 +223,7 @@ let pathfinding = function (p) {
         else {
             if (!found) {
                 console.log("path not found");
-                state = states.NONE;
+                state = State.NONE;
             }
         }
     };
@@ -226,7 +233,7 @@ let pathfinding = function (p) {
         p.background(255);
 
         //p.AStar(start, end);
-        if (state == states.CALCULATING)
+        if (state == State.CALCULATING)
             p.AStar(start, end);
 
         for (let i = 0; i < openSet.length; i++) {
@@ -251,7 +258,7 @@ let pathfinding = function (p) {
                 p.strokeWeight(1);
                 p.line(x * cellw + marginx, y * cellw + marginy, x * cellw + marginx, (y + 1) * cellw + marginy);
                 p.line(x * cellw + marginx, y * cellw + marginy, (x + 1) * cellw + marginx, y * cellw + marginy);
-                if (debug) {
+                if (p.debug()) {
                     p.textAlign(p.CENTER);
                     let n = p.getNode(y, x);
                     p.strokeWeight(0.5);
@@ -288,7 +295,7 @@ let pathfinding = function (p) {
     };
 
     p.isCalculating = function () {
-        return state === states.CALCULATING;
+        return state === State.CALCULATING;
     };
 
     p.isValidNode = function (node) {
@@ -315,7 +322,7 @@ let pathfinding = function (p) {
 
         let n = p.getNodeMouseIsOn(x, y);
         if (p.isValidNode(n)) {
-            state = n.getIsWall() ? states.ERASING_WALL_SINGLE : states.PAINTING_WALL_SINGLE;
+            state = n.getIsWall() ? State.ERASING_WALL_SINGLE : State.PAINTING_WALL_SINGLE;
         }
     };
 
@@ -334,24 +341,24 @@ let pathfinding = function (p) {
             return;
 
         switch (state) {
-            case states.PAINTING_WALL_SINGLE:
-                state = states.PAINTING_WALL_MULTIPLE;
+            case State.PAINTING_WALL_SINGLE:
+                state = State.PAINTING_WALL_MULTIPLE;
                 cmds.push(new Cmd(state, [n], p));
                 p.setWall(n, true);
                 break;
-            case states.ERASING_WALL_SINGLE:
-                state = states.ERASING_WALL_MULTIPLE;
+            case State.ERASING_WALL_SINGLE:
+                state = State.ERASING_WALL_MULTIPLE;
                 cmds.push(new Cmd(state, [n], p));
                 p.setWall(n, false);
                 break;
-            case states.PAINTING_WALL_MULTIPLE:
+            case State.PAINTING_WALL_MULTIPLE:
                 if (!n.getIsWall()) {
                     let cmd = p.getLastCmd();
                     cmd.addNode(n);
                     p.setWall(n, true);
                 }
                 break;
-            case states.ERASING_WALL_MULTIPLE:
+            case State.ERASING_WALL_MULTIPLE:
                 if (n.getIsWall()) {
                     let cmd = p.getLastCmd();
                     cmd.addNode(n);
@@ -374,10 +381,10 @@ let pathfinding = function (p) {
         if (!p.isValidNode(n))
             return;
 
-        if (state === states.PAINTING_WALL_SINGLE) {
+        if (state === State.PAINTING_WALL_SINGLE) {
             cmds.push(new Cmd(state, [n], p));
             p.setWall(n, true);
-        } else if (state === states.ERASING_WALL_SINGLE) {
+        } else if (state === State.ERASING_WALL_SINGLE) {
             cmds.push(new Cmd(state, [n], p));
             p.setWall(n, false);
         }
@@ -395,7 +402,7 @@ let pathfinding = function (p) {
     p.mouseHandler = function () {
         if (startButton.clicked(p.mouseX, p.mouseY)) {
             p.reset();
-            state = states.CALCULATING;
+            state = State.CALCULATING;
         }
 
         if (clearButton.clicked(p.mouseX, p.mouseY)) {
@@ -421,6 +428,14 @@ let pathfinding = function (p) {
         return grid[c + r * cols];
     };
 
+    p.allowDiagonal = function () {
+        return diagonalCheckbox.checked();
+    };
+
+    p.debug = function() {
+        return debugCheckbox.checked();
+    };
+
     p.getNodeByNeighborType = function (n, neighborType) {
         if (n == null)
             return null;
@@ -428,19 +443,19 @@ let pathfinding = function (p) {
         switch (neighborType)
         {
             case NeighborType.TopLeft:
-                return p.getNode(n.r - 1, n.c - 1);
+                return p.allowDiagonal() ? p.getNode(n.r - 1, n.c - 1) : null;
             case NeighborType.Top:
                 return p.getNode(n.r - 1, n.c);
             case NeighborType.TopRight:
-                return p.getNode(n.r - 1, n.c + 1);
+                return p.allowDiagonal() ? p.getNode(n.r - 1, n.c + 1) : null;
             case NeighborType.Right:
                 return p.getNode(n.r, n.c + 1);
             case NeighborType.BottomRight:
-                return p.getNode(n.r + 1, n.c + 1);
+                return p.allowDiagonal() ? p.getNode(n.r + 1, n.c + 1) : null;
             case NeighborType.Bottom:
                 return p.getNode(n.r + 1, n.c);
             case NeighborType.BottomLeft:
-                return p.getNode(n.r + 1, n.c - 1);
+                return p.allowDiagonal() ? p.getNode(n.r + 1, n.c - 1) : null;
             case NeighborType.Left:
                 return p.getNode(n.r, n.c - 1);
         }

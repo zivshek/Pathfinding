@@ -237,6 +237,7 @@ let pathfinding = function (p) {
                     if (openSet.includes(neighbor)) {
                         if (g < neighbor.g) {
                             neighbor.g = g;
+                            neighbor.cameFrom = current;
                         }
                     }
                     else {

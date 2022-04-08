@@ -7,14 +7,14 @@ class Cmd {
 
     undo() {
         switch (this.action) {
-            case 1: // painting wall
-            case 2:
+            case State.PAINTING_WALL_SINGLE: // painting wall
+            case State.PAINTING_WALL_MULTIPLE:
                 this.nodes.forEach(node => {
                     this.p.setWall(node, false);
                 });
                 break;
-            case 3: // erasing wall
-            case 4:
+            case State.ERASING_WALL_SINGLE: // erasing wall
+            case State.ERASING_WALL_MULTIPLE:
                 this.nodes.forEach(node => {
                     this.p.setWall(node, true);
                 });

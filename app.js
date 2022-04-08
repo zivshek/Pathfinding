@@ -21,29 +21,6 @@ let pathfinding = function (p) {
     };
     let speed = 20;
 
-    const State = {
-        NONE: 0,
-        PAINTING_WALL_SINGLE: 1,
-        PAINTING_WALL_MULTIPLE: 2,
-        ERASING_WALL_SINGLE: 3,
-        ERASING_WALL_MULTIPLE: 4,
-        CALCULATING: 5,
-        PAUSED: 6
-    };
-
-    const NeighborType = {
-        TopLeft: 0,
-        Top: 1,
-        TopRight: 2,
-        Right: 3,
-        BottomRight: 4,
-        Bottom: 5,
-        BottomLeft: 6,
-        Left: 7,
-
-        Total: 8
-    };
-
     let state = State.NONE;
 
     // only called once

@@ -74,22 +74,13 @@ let pathfinding = function (p) {
 
     p.setup = function () {
         p.init();
-        p.reset();
+        p.onDebugCheckboxChanged();
 
         state = State.CALCULATING;
     };
 
     p.reset = function () {
         p.frameRate(speed);
-        cellw = p.debug() ? 90 : 30;
-        cols = p.floor(gridw / cellw);
-        rows = p.floor(gridh / cellw);
-        totalNodes = cols * rows;
-        grid = new Array(totalNodes);
-
-        for (let i = 0; i < totalNodes; i++) {
-            grid[i] = new Node(i, p.getRow(i), p.getCol(i), cellw, marginx, marginy, p);
-        }
 
         if (p.debug()) {
             start = p.getNode(1, 1);
@@ -130,6 +121,16 @@ let pathfinding = function (p) {
     };
 
     p.onDebugCheckboxChanged = function () {
+        cellw = p.debug() ? 90 : 30;
+        speed = p.debug() ? 5 : 20;
+        cols = p.floor(gridw / cellw);
+        rows = p.floor(gridh / cellw);
+        totalNodes = cols * rows;
+        grid = new Array(totalNodes);
+        for (let i = 0; i < totalNodes; i++) {
+            grid[i] = new Node(i, p.getRow(i), p.getCol(i), cellw, marginx, marginy, p);
+        }
+        walls = [];
         p.reset();
     };
 
@@ -290,11 +291,16 @@ let pathfinding = function (p) {
                 if (p.debug()) {
                     p.textAlign(p.CENTER);
                     let n = p.getNode(y, x);
+                    if (n.isWall) {
+                        p.fill(255);
+                    } else {
+                        p.fill(0);
+                    }
                     p.strokeWeight(0.5);
-                    p.textSize(8);
+                    p.textSize(12);
                     let xPos = n.x + cellw / 2;
                     let getYPos = (line) => {
-                        return n.y + line * cellw / 5;
+                        return n.y - 5 + line * cellw / 5;
                     };
                     let line = 1;
                     p.text('index: ' + n.id, xPos, getYPos(line++));
@@ -325,7 +331,7 @@ let pathfinding = function (p) {
     };
 
     p.isCalculating = function () {
-        return state === State.CALCULATING;
+        return state === State.CALCULATING || state === State.PAUSED;
     };
 
     p.isValidNode = function (node) {
@@ -432,14 +438,14 @@ let pathfinding = function (p) {
     p.mouseHandler = function () {
         if (p.btnClicked(startButton)) {
             switch (state) {
-                case State.NONE:
-                    p.reset();
-                    state = State.CALCULATING;
-                    break;
                 case State.CALCULATING:
                     state = State.PAUSED;
                     break;
                 case State.PAUSED:
+                    state = State.CALCULATING;
+                    break;
+                default:
+                    p.reset();
                     state = State.CALCULATING;
                     break;
             }

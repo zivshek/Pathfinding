@@ -1,12 +1,21 @@
 class CustomButton {
 
-    constructor(x, y, w, h, text, p5) {
+    constructor(x, y, w, h, text, p5, visible = true) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
         this.text = text;
         this.p5 = p5;
+        this.visible = visible;
+    }
+
+    setVisible(visible) {
+        this.visible = visible;
+    }
+
+    setText(text) {
+        this.text = text;
     }
 
     clicked(mx, my) {
@@ -15,6 +24,9 @@ class CustomButton {
     }
 
     draw(color) {
+        if (!this.visible)
+            return;
+
         this.p5.push();
         this.p5.stroke(0);
         this.p5.strokeWeight(0.5);

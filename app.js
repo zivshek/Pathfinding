@@ -11,7 +11,7 @@ let pathfinding = function (p) {
     let end;
     let found;
 
-    let startButton, clearButton, diagonalCheckbox, debugCheckbox;
+    let startButton, stepButton, clearButton, diagonalCheckbox, debugCheckbox;
 
     let cmds = [];
     let MAX_CMDS = 10;
@@ -27,7 +27,8 @@ let pathfinding = function (p) {
         PAINTING_WALL_MULTIPLE: 2,
         ERASING_WALL_SINGLE: 3,
         ERASING_WALL_MULTIPLE: 4,
-        CALCULATING: 5
+        CALCULATING: 5,
+        PAUSED: 6
     };
 
     const NeighborType = {
@@ -55,8 +56,17 @@ let pathfinding = function (p) {
         marginy = (canvasH - gridh) / 2;
         p.createCanvas(canvasW, canvasH);
 
-        startButton = new CustomButton(canvasW / 2, canvasH - 40, 100, 35, "S t a r t", p);
-        clearButton = new CustomButton(marginx + 50, 40, 100, 35, "C l e a r", p);
+        {
+            let x = canvasW / 2;
+            const y = canvasH - 40;
+            const w = 100;
+            const h = 35;
+            startButton = new CustomButton(x, y, w, h, 'S t a r t', p);
+            x += 2 * w;
+            stepButton = new CustomButton(x, y, w, h, 'S t e p', p, false);
+        }
+
+        clearButton = new CustomButton(marginx + 50, 40, 100, 35, 'C l e a r', p);
         diagonalCheckbox = p.createCheckbox('allow diagonal', true);
         debugCheckbox = p.createCheckbox('debug', false);
         debugCheckbox.changed(p.onDebugCheckboxChanged);
@@ -100,6 +110,23 @@ let pathfinding = function (p) {
         start.f = start.g + start.h;
         openSet.push(start);
         state = State.NONE;
+
+        p.updateBtns();
+    };
+
+    p.updateBtns = function() {
+        if (state === State.NONE) {
+            startButton.setText('S t a r t');
+            stepButton.setVisible(false);
+        }
+        else if (state === State.CALCULATING) {
+            startButton.setText('P a u s e');
+            stepButton.setVisible(false);
+        }
+        else if (state === State.PAUSED) {
+            startButton.setText('Resume');
+            stepButton.setVisible(true);
+        }
     };
 
     p.onDebugCheckboxChanged = function () {
@@ -190,6 +217,7 @@ let pathfinding = function (p) {
                 }
                 path.push(start);
                 state = State.NONE;
+                p.updateBtns();
                 return;
             }
 
@@ -224,6 +252,7 @@ let pathfinding = function (p) {
             if (!found) {
                 console.log("path not found");
                 state = State.NONE;
+                p.updateBtns();
             }
         }
     };
@@ -291,6 +320,7 @@ let pathfinding = function (p) {
         }
 
         startButton.draw('rgb(185, 229, 123)');
+        stepButton.draw('rgb(185, 229, 123)');
         clearButton.draw(p.color(200, 30, 30, 150));
     };
 
@@ -400,18 +430,37 @@ let pathfinding = function (p) {
     };
 
     p.mouseHandler = function () {
-        if (startButton.clicked(p.mouseX, p.mouseY)) {
-            p.reset();
-            state = State.CALCULATING;
+        if (p.btnClicked(startButton)) {
+            switch (state) {
+                case State.NONE:
+                    p.reset();
+                    state = State.CALCULATING;
+                    break;
+                case State.CALCULATING:
+                    state = State.PAUSED;
+                    break;
+                case State.PAUSED:
+                    state = State.CALCULATING;
+                    break;
+            }
+            p.updateBtns();
         }
 
-        if (clearButton.clicked(p.mouseX, p.mouseY)) {
+        if (p.btnClicked(clearButton)) {
             p.reset();
             for (let i = 0; i < walls.length; i++) {
                 walls[i].setIsWall(false);
             }
             walls = [];
         }
+
+        if (stepButton.visible && p.btnClicked(stepButton)) {
+            p.AStar(start, end);
+        }
+    };
+
+    p.btnClicked = function(btn) {
+        return btn.clicked(p.mouseX, p.mouseY);
     };
 
     p.removeElement = function (array, element) {

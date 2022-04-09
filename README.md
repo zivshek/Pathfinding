@@ -6,3 +6,5 @@ https://zivshek.github.io/Pathfinding/
 - Click on a blocker tile and then drag will make blocker tiles empty.
 - Ctrl + Z to revert the last action(s).
 - Supports diagonal movements.
+
+![screenshot](screenshot.png)
